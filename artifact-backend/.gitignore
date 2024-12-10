@@ -1,0 +1,14 @@
+# Ignore credentials file
+google-credentials.json
+
+# Node modules
+/node_modules/
+
+# Environment variables
+.env
+
+# Uploads directory
+/uploads/
+
+# Logs
+*.log
