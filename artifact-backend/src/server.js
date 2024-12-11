@@ -42,6 +42,7 @@ const Photo = mongoose.model('Photo', photoSchema);
 const jurySchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    email: { type: String, required: true, unique: true }, // Menambahkan email
 });
 
 const Jury = mongoose.model('Jury', jurySchema);
@@ -153,39 +154,42 @@ loadSecrets().then(() => {
         });
     }
 
-    // Fungsi untuk menganalisis gambar menggunakan Vision API
-    async function analyzeImage(imageUrl) {
-        const client = new vision.ImageAnnotatorClient({
-            keyFilename: path.join(__dirname, 'google-credentials.json'),
+   // Fungsi untuk menganalisis gambar menggunakan Vision API dan mendeteksi gambar buatan manusia atau AI
+async function analyzeImage(imageUrl) {
+    const client = new vision.ImageAnnotatorClient({
+        keyFilename: path.join(__dirname, 'google-credentials.json'),
+    });
+
+    const [labelResult] = await client.labelDetection(imageUrl);
+    const labels = labelResult.labelAnnotations;
+
+    let category = "human"; // Default category as "human"
+
+    // Fungsi untuk menentukan apakah gambar manusia atau AI
+    function classifyImage(labels) {
+        let isAI = false;
+
+        // Periksa jika ada label yang cocok dengan AI
+        labels.forEach(label => {
+            if (label.description === "CG artwork" || label.description === "Animation") {
+                isAI = true;
+            }
         });
 
-        const [labelResult] = await client.labelDetection(imageUrl);
-        const labels = labelResult.labelAnnotations;
-
-        const [faceResult] = await client.faceDetection(imageUrl);
-        const faces = faceResult.faceAnnotations;
-
-        const [textResult] = await client.textDetection(imageUrl);
-        const text = textResult.textAnnotations;
-
-        let category = "Unknown";
-
-        if (faces && faces.length > 0) {
-            category = "Person (Face detected)";
-        } else if (text && text.length > 0) {
-            category = "Text (Text detected)";
-        } else if (labels && labels.length > 0) {
-            category = "Other (Detected objects)";
-        }
-
-        return {
-            category,
-            labels: labels.length > 0 ? labels : "No labels detected",
-            faces: faces.length > 0 ? "Faces detected" : "No faces detected",
-            text: text.length > 0 ? text.map(t => t.description).join(", ") : "No text detected",
-            imageUrl,
-        };
+        // Kembali hasil klasifikasi
+        return isAI ? 'AI Detected' : 'Human Detected';
     }
+
+    // Hasil klasifikasi gambar
+    category = classifyImage(labels);
+
+    return {
+        category, // "human" or "ai"
+        labels: labels.length > 0 ? labels : "No labels detected",
+        imageUrl,
+    };
+}
+
 
     // Menambahkan Route untuk `/`
     app.get('/', (req, res) => {
@@ -239,7 +243,7 @@ loadSecrets().then(() => {
         }
     });
 
-    // Route untuk analisis gambar menggunakan Vision API
+    // Route untuk analisis gambar menggunakan Vision API (dengan 2 kategori: human/ai)
     app.post('/api/analyze', authenticateToken, upload.single('image'), async (req, res) => {
         try {
             if (!req.file) return res.status(400).json({ message: 'No image file uploaded' });
@@ -260,10 +264,10 @@ loadSecrets().then(() => {
 
     // Route untuk registrasi Juri
     app.post('/api/jury/register', async (req, res) => {
-        const { username, password } = req.body;
+        const { username, password, email } = req.body;
 
-        if (!username || !password) {
-            return res.status(400).json({ message: 'Username and password are required' });
+        if (!username || !password || !email) {
+            return res.status(400).json({ message: 'Username, password, and email are required' });
         }
 
         try {
@@ -274,7 +278,7 @@ loadSecrets().then(() => {
             }
 
             // Membuat juri baru
-            const newJury = new Jury({ username, password });
+            const newJury = new Jury({ username, password, email });
             await newJury.save();
 
             res.status(201).json({ message: 'Jury registered successfully', jury: newJury });
@@ -332,21 +336,21 @@ loadSecrets().then(() => {
             res.status(500).json({ message: 'Error adding photo', error: err });
         }
     });
-
-    // Route untuk mendapatkan semua foto
-    app.get('/api/photos', authenticateToken, async (req, res) => {
-        try {
-            const photos = await Photo.find();
-            if (!photos.length) return res.status(404).json({ message: 'No photos found' });
-            res.status(200).json(photos);
-        } catch (err) {
-            logMessage('Error retrieving photos:', err);
-            res.status(500).json({ message: 'Error retrieving photos', error: err });
-        }
-    });
-
-    app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
-    });
+    
+    // Route untuk mendapatkan semua Foto
+app.get('/api/photos', authenticateToken, async (req, res) => {
+    try {
+        const photos = await Photo.find();
+        if (!photos.length) return res.status(404).json({ message: 'No photos found' });
+        res.status(200).json(photos);
+    } catch (err) {
+        logMessage('Error retrieving photos:', err);
+        res.status(500).json({ message: 'Error retrieving photos', error: err });
+    }
 });
 
+    // Menjalankan server
+    app.listen(PORT, () => {
+        logMessage(`Server is running on port ${PORT}`);
+    });
+});
