@@ -345,8 +345,8 @@ loadSecrets().then(() => {
         }
     });
 
-    // Menjalankan server
     app.listen(PORT, () => {
-        logMessage(`Server is running on port ${PORT}`);
+        console.log(`Server is running on port ${PORT}`);
     });
 });
+

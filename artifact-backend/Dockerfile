@@ -1,20 +1,20 @@
-# Gunakan image Node.js
+# Gunakan image resmi Node.js versi 16 sebagai base image
 FROM node:16
 
-# Set directory untuk aplikasi
+# Tetapkan direktori kerja di dalam container
 WORKDIR /usr/src/app
 
-# Copy package.json dan package-lock.json untuk install dependensi
+# Salin file package.json dan package-lock.json untuk instalasi dependensi
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependensi (gunakan opsi --production untuk hanya menginstall dependensi runtime)
+RUN npm install --production
 
-# Salin seluruh file aplikasi
+# Salin seluruh file aplikasi ke dalam container
 COPY . .
 
-# Tentukan port yang akan digunakan
+# Ekspos port 8080 agar aplikasi dapat diakses dari luar container
 EXPOSE 8080
 
-# Jalankan aplikasi
+# Tentukan perintah untuk menjalankan aplikasi
 CMD ["npm", "start"]
