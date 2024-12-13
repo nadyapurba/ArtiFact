@@ -23,7 +23,7 @@ AI-ArtBench is a dataset that contains 180,000+ art images. 60,000 of them are h
 - <img src="https://img.shields.io/badge/Library-Matplotlib-blue.svg" alt="Matplotlib">
 - <img src="https://img.shields.io/badge/Library-scikit--learn-blue.svg" alt="scikit-learn">
 - <img src="https://img.shields.io/badge/Library-Seaborn-blue.svg" alt="Seaborn">
-- <img src="https://img.shields.io/badge/Library-sc-Pandas-blue.svg" alt="Pandas">
+- <img src="https://img.shields.io/badge/Library-Pandas-blue.svg" alt="Pandas">
 - <img src="https://img.shields.io/badge/Library-Pillow-blue.svg" alt="Pillow">
 - <img src="https://img.shields.io/badge/Library-OpenCV-orange.svg" alt="OpenCV">
 - <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab">
